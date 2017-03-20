@@ -22,9 +22,10 @@ a, b = smp.symbols('a, b')           # Generate symbols so we can use them in ou
 
 class Molecule:
     """This class represents a molecule with a Huckel Matrix"""
-    def __init__(self, name, huckel, num_pi_electrons):
+    def __init__(self, name, huckel, num_pi_electrons, num_carbons):
         self.huckel = huckel
         self.name = name
+        self.num_carbons = num_carbons
         self.eigenvalues = []
         self.eigenvectors = []
         self.mega_eigen_array = []
@@ -32,6 +33,7 @@ class Molecule:
         self.deloc_energy = 0.0
         self.alpha = None
         self.beta = None
+        self.charge_density = []
 
     @staticmethod
     def sort_eigs(eig):
@@ -140,14 +142,40 @@ class Molecule:
         self.deloc_energy = deloc_energy
 
         return self.deloc_energy
-
-
+    
+    def find_charge_density(self):
+        """finds the charge density of Pi electrons for each carbon atom in the molecule"""
+        carbon_iter = 0 #allows us to index eigenvectors for the wave function at a specific carbon atom
+        charge_density = [] 
+        while carbon_iter < self.num_carbons: #Loops through carbon atoms to assign charge density
+            sum = 0
+            num_elec = self.num_pi_electrons 
+            for eig in self.eigenvectors:
+                if num_elec > 1:
+                    sum += 2*(abs(float(eig[0][carbon_iter]))**2)
+                    num_elec -= 2
+                elif num_elec == 1:
+                    sum += abs(float(eig[0][carbon_iter]))**2
+                    num_elec -= 1
+                else:
+                    pass
+            charge_density.append(sum)
+            carbon_iter += 1
+    
+        self.charge_density = charge_density #list of charge densities for carbon atoms 1-n
+    
+        return self.charge_density
+	    
+	
 
 """Part A"""
 
 butadiene_huckel = smp.Matrix([[a, b, 0, 0], [b, a, b, 0],
                                [0, b, a, b], [0, 0, b, a]])       # Create our matrix for the molecule
-butadiene = Molecule("Butadine", butadiene_huckel, 4)      # Create the matrix
+butadiene = Molecule("Butadine", butadiene_huckel, 4, 4)      # Create the matrix
 butadiene.generate_eigen()                              # Generate the eigenvalues and eigenvector
-butadiene.energy_level_plot()
-print(butadiene.find_deloc_energy())
+#butadiene.set_constants(0, -1)
+#butadiene.energy_level_plot()
+#print(butadiene.find_deloc_energy())
+butadiene.find_charge_density()
+print(butadiene.charge_density)
