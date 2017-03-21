@@ -34,6 +34,7 @@ class Molecule:
         self.alpha = None
         self.beta = None
         self.charge_density = []
+        self.bond_order = []
 
     @staticmethod
     def sort_eigs(eig):
@@ -163,10 +164,40 @@ class Molecule:
             carbon_iter += 1
     
         self.charge_density = charge_density #list of charge densities for carbon atoms 1-n
-    
-        return self.charge_density
 	    
-	
+    def find_bond_order(self):
+        """finds the bond order of molecule, stores as list of values beginning at C1"""
+        carbon_iter = 0
+        bond_order = []
+        while carbon_iter < self.num_carbons-1:
+            sum = 1
+            num_elec = self.num_pi_electrons
+            for eig in self.eigenvectors:
+                if num_elec > 1:
+                    sum += 2*(float(eig[0][carbon_iter]*eig[0][carbon_iter+1]))
+                    num_elec -= 2
+                elif num_elec == 1:
+                    sum += float(eig[0][carbon_iter]*eig[0][carbon_iter+1])
+                    num_elec -= 1
+                else:
+                    pass
+            bond_order.append(sum)
+            carbon_iter += 1
+
+        self.bond_order = bond_order
+    
+    def normalize_eigenvectors(self):
+        """replaces eigenvectors with normalized float type eigenvectors"""    
+        for eig in self.eigenvectors:
+            magnitude = 0
+            carbon_iter = 0	    
+            while carbon_iter < self.num_carbons:
+                magnitude += abs(float(eig[0][carbon_iter]))**2
+                carbon_iter += 1
+            carbon_iter = 0
+            while carbon_iter < self.num_carbons:
+                eig[0][carbon_iter] = float(eig[0][carbon_iter])/magnitude
+                carbon_iter += 1		
 
 """Part A"""
 
@@ -175,7 +206,13 @@ butadiene_huckel = smp.Matrix([[a, b, 0, 0], [b, a, b, 0],
 butadiene = Molecule("Butadine", butadiene_huckel, 4, 4)      # Create the matrix
 butadiene.generate_eigen()                              # Generate the eigenvalues and eigenvector
 #butadiene.set_constants(0, -1)
-#butadiene.energy_level_plot()
-#print(butadiene.find_deloc_energy())
+butadiene.normalize_eigenvectors()
 butadiene.find_charge_density()
+butadiene.find_bond_order()
+print('Charge Density')
 print(butadiene.charge_density)
+print('Bond Order')
+print(butadiene.bond_order)
+print('Normalized Eigenvectors')
+butadiene.print_eigenvectors()
+
