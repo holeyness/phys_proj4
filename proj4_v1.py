@@ -28,6 +28,7 @@ class Molecule:
         self.num_carbons = num_carbons
         self.eigenvalues = []
         self.eigenvectors = []
+        self.normalized_eigenvectors = []
         self.mega_eigen_array = []
         self.num_pi_electrons = num_pi_electrons
         self.deloc_energy = 0.0
@@ -59,6 +60,13 @@ class Molecule:
         self.eigenvalues = list(self.huckel.eigenvals().keys())
         self.eigenvectors = [x[2] for x in self.huckel.eigenvects()]    # The 3rd element contains the eigenvector
         self.mega_eigen_array = self.huckel.eigenvects()
+
+    def normalize_eigenvector(self):
+        """This function will take the current eigenvectors, and normalize them"""
+        for eig_vect in self.eigenvectors:
+            print(smp.N(eig_vect[0].norm()))
+            print(eig_vect[0].normalized())
+
 
     def print_eigenvectors(self):
         """Pretty print the list of vectors"""
@@ -205,6 +213,8 @@ butadiene_huckel = smp.Matrix([[a, b, 0, 0], [b, a, b, 0],
                                [0, b, a, b], [0, 0, b, a]])       # Create our matrix for the molecule
 butadiene = Molecule("Butadine", butadiene_huckel, 4, 4)      # Create the matrix
 butadiene.generate_eigen()                              # Generate the eigenvalues and eigenvector
+
+
 #butadiene.set_constants(0, -1)
 butadiene.normalize_eigenvectors()
 butadiene.find_charge_density()
