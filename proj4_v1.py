@@ -8,6 +8,7 @@ import math
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 from operator import itemgetter
+import random
 
 """
 Preface:
@@ -41,7 +42,7 @@ class Molecule:
     @staticmethod
     def sort_eigs(eig):
         """This is a sorting function that is able to sort the eigenvalues symbolically"""
-        return smp.N(eig.subs(a, -1).subs(b, -1))
+        return smp.N(eig[0].subs(a, -1).subs(b, -1))
 
     def __str__(self):
         """Create the string representation for the molecule"""
@@ -58,7 +59,11 @@ class Molecule:
     def generate_eigen(self):
         """Finds the eigenvalue and eigenvector for the huckel matrix"""
         # Generates list of tuple (eigenvalues, multiplicity)
-        self.eigenvalues = list(self.huckel.eigenvals().keys())
+
+        for k, v in self.huckel.eigenvals().items():
+            self.eigenvalues += v * [k]                               # Add eigenvalues multiplicity times
+
+        print(self.eigenvalues)
         self.eigenvectors = [x[2] for x in self.huckel.eigenvects()]  # The 3rd element contains the eigenvector
         self.mega_eigen_array = self.huckel.eigenvects()
 
@@ -89,7 +94,7 @@ class Molecule:
 
     def energy_level_plot(self):
         """Plots the energy levels and denoate spin for the electrons"""
-        assert (self.alpha is not None and self.beta is not None)  # Make sure alpha and beta are defined
+        assert(self.alpha is not None and self.beta is not None)  # Make sure alpha and beta are defined
 
         self.generate_eigen()
 
@@ -98,22 +103,42 @@ class Molecule:
         up_arrow = u'$\u2191$'
 
         electrons_used = self.num_pi_electrons
-        for eig in sorted(self.eigenvalues, key=self.sort_eigs):
-            plt.axhline(eig)  # Draw the eigenvalues as lines on the graph
-            # Fill up to two electrons per level, from bottom up
-            if electrons_used > 1:
-                plt.plot(-0.8, eig, linestyle='none', marker=up_arrow, markersize=15)
-                plt.plot(-0.2, eig, linestyle='none', marker=down_arrow, markersize=15)
-                electrons_used -= 2
-            elif electrons_used == 1:
-                plt.plot(-0.8, eig, linestyle='none', marker=up_arrow, markersize=15)
-                electrons_used -= 1
-
+        max_multiplicity = max(self.mega_eigen_array, key=itemgetter(1))[1]
+        for eig in sorted(self.mega_eigen_array, key=self.sort_eigs):
+            eig_val = eig[0].subs(a, self.alpha).subs(b, self.beta)
+            if eig[1] == 1:
+                plt.axhline(eig[0].subs(a, self.alpha).subs(b, self.beta))  # Draw the eigenvalues as lines on the graph
             else:
-                pass
+                for i in range(eig[1]):
+                    plt.plot([i, i + 0.95], 2 * [eig_val],
+                             color=np.random.rand(3, ))
+
+            # Fill up to two electrons per level per line, from bottom up
+            if eig[1] == 1:
+                if electrons_used > 1:
+                    plt.plot(0.2 * max_multiplicity, eig_val, linestyle='none', marker=up_arrow, markersize=15)
+                    plt.plot(0.8 * max_multiplicity, eig_val, linestyle='none', marker=down_arrow, markersize=15)
+                    electrons_used -= 2
+                elif electrons_used == 1:
+                    plt.plot(0.2 * max_multiplicity, eig_val, linestyle='none', marker=up_arrow, markersize=15)
+                    electrons_used -= 1
+
+                else:
+                    pass
+            else:
+                for i in range(eig[1]):
+                    # Add all the up arrows
+                    if electrons_used >= 1:
+                        plt.plot(0.2 + i, eig_val, linestyle='none', marker=up_arrow, markersize=15)
+                        electrons_used -= 1
+                for i in range(eig[1]):
+                    # Add all the up arrows
+                    if electrons_used >= 1:
+                        plt.plot(0.8 + i, eig_val, linestyle='none', marker=down_arrow, markersize=15)
+                        electrons_used -= 1
 
         plt.title('Energy Level Plot for ' + str(self.name))
-        plt.xlim(-1, 0)  # Format the Graph
+        plt.xlim(0, max_multiplicity)  # Format the Graph
         plt.xticks([])  # Hide the x-axes
         plt.ylabel('Energy')
         plt.show()
@@ -153,12 +178,12 @@ class Molecule:
         while carbon_iter < self.num_carbons:  # Loops through carbon atoms to assign charge density
             charge_sum = 0
             num_elec = self.num_pi_electrons
-            for eig in self.eigenvectors:
+            for eig in self.mega_eigen_array:
                 if num_elec > 1:
-                    charge_sum += 2 * (abs(float(eig[0][carbon_iter])) ** 2)
-                    num_elec -= 2
+                    charge_sum += eig[1] * 2 * (abs(float(eig[2][carbon_iter])) ** 2)
+                    num_elec -= 2 * eig[1]
                 elif num_elec == 1:
-                    charge_sum += abs(float(eig[0][carbon_iter])) ** 2
+                    charge_sum += abs(float(eig[2][carbon_iter])) ** 2
                     num_elec -= 1
                 else:
                     pass
@@ -208,28 +233,30 @@ butadiene_huckel = smp.Matrix([[a, b, 0, 0], [b, a, b, 0],
 butadiene = Molecule("Butadine", butadiene_huckel, 4, 4)  # Create the matrix
 butadiene.generate_eigen()  # Generate the eigenvalues and eigenvector
 
-# butadiene.set_constants(0, -1)
-butadiene.normalize_eigenvectors()
-butadiene.find_charge_density()
-butadiene.find_bond_order()
-print('Charge Density')
-print(butadiene.charge_density)
-print('Bond Order')
-print(butadiene.bond_order)
-print('Normalized Eigenvectors')
-butadiene.print_eigenvectors()
+butadiene.set_constants(0, -1)
+butadiene.energy_level_plot()
+# butadiene.normalize_eigenvectors()
+# butadiene.find_charge_density()
+# butadiene.find_bond_order()
+# print('Charge Density')
+# print(butadiene.charge_density)
+# print('Bond Order')
+# print(butadiene.bond_order)
+# print('Normalized Eigenvectors')
+# butadiene.print_eigenvectors()
 
 # Benzene
 benzene_huckel = smp.Matrix([[a, b, 0, 0, 0, b], [b, a, b, 0, 0, 0], [0, b, a, b, 0, 0],
                              [0, 0, b, a, b, 0], [0, 0, 0, b, a, b], [b, 0, 0, 0, b, a]])
-benzene = Molecule("Benzene", benzene_huckel, 6, 6)
+benzene = Molecule("Benzene", benzene_huckel, 9, 6)
 benzene.generate_eigen()
 benzene.set_constants(0, -1)
-print(benzene.eigenvalues)
-benzene.normalize_eigenvectors()
-benzene.find_charge_density()
-benzene.find_bond_order()
-print('Benzene Charge Density', benzene.charge_density)
-print('Benzene Bond Order', benzene.bond_order)
-print('Normalized Eigenvectors')
-benzene.print_eigenvectors()
+benzene.energy_level_plot()
+# print(benzene.mega_eigen_array)
+# benzene.normalize_eigenvectors()
+# benzene.find_charge_density()
+# benzene.find_bond_order()
+# print('Benzene Charge Density', benzene.charge_density)
+# print('Benzene Bond Order', benzene.bond_order)
+# print('Normalized Eigenvectors')
+# benzene.print_eigenvectors()
