@@ -17,11 +17,12 @@ for the Huckel Effective Hamiltonian and use them to create an energy level diag
 of molecule.
 """
 
-a, b = smp.symbols('a, b')           # Generate symbols so we can use them in our fancy matrix
+a, b = smp.symbols('a, b')  # Generate symbols so we can use them in our fancy matrix
 
 
 class Molecule:
     """This class represents a molecule with a Huckel Matrix"""
+
     def __init__(self, name, huckel, num_pi_electrons, num_carbons):
         self.huckel = huckel
         self.name = name
@@ -58,15 +59,8 @@ class Molecule:
         """Finds the eigenvalue and eigenvector for the huckel matrix"""
         # Generates list of tuple (eigenvalues, multiplicity)
         self.eigenvalues = list(self.huckel.eigenvals().keys())
-        self.eigenvectors = [x[2] for x in self.huckel.eigenvects()]    # The 3rd element contains the eigenvector
+        self.eigenvectors = [x[2] for x in self.huckel.eigenvects()]  # The 3rd element contains the eigenvector
         self.mega_eigen_array = self.huckel.eigenvects()
-
-    def normalize_eigenvector(self):
-        """This function will take the current eigenvectors, and normalize them"""
-        for eig_vect in self.eigenvectors:
-            print(smp.N(eig_vect[0].norm()))
-            print(eig_vect[0].normalized())
-
 
     def print_eigenvectors(self):
         """Pretty print the list of vectors"""
@@ -79,10 +73,10 @@ class Molecule:
         def find_nodes_helper(eigenvector):
             """ A helper function that count the number of nodes for a specific eigenvector"""
 
-            nodes = 0                       # Number of Nodes
+            nodes = 0  # Number of Nodes
             for i in range(len(eigenvector) - 1):
                 if eigenvector[i] * eigenvector[i + 1] < 0:
-                    nodes += 1              # We have a node
+                    nodes += 1  # We have a node
             return nodes
 
         result = []
@@ -95,7 +89,7 @@ class Molecule:
 
     def energy_level_plot(self):
         """Plots the energy levels and denoate spin for the electrons"""
-        assert(self.alpha is not None and self.beta is not None)        # Make sure alpha and beta are defined
+        assert (self.alpha is not None and self.beta is not None)  # Make sure alpha and beta are defined
 
         self.generate_eigen()
 
@@ -105,7 +99,7 @@ class Molecule:
 
         electrons_used = self.num_pi_electrons
         for eig in sorted(self.eigenvalues, key=self.sort_eigs):
-            plt.axhline(eig)                                 # Draw the eigenvalues as lines on the graph
+            plt.axhline(eig)  # Draw the eigenvalues as lines on the graph
             # Fill up to two electrons per level, from bottom up
             if electrons_used > 1:
                 plt.plot(-0.8, eig, linestyle='none', marker=up_arrow, markersize=15)
@@ -119,8 +113,8 @@ class Molecule:
                 pass
 
         plt.title('Energy Level Plot for ' + str(self.name))
-        plt.xlim(-1, 0)                                         # Format the Graph
-        plt.xticks([])                                          # Hide the x-axes
+        plt.xlim(-1, 0)  # Format the Graph
+        plt.xticks([])  # Hide the x-axes
         plt.ylabel('Energy')
         plt.show()
 
@@ -151,41 +145,41 @@ class Molecule:
         self.deloc_energy = deloc_energy
 
         return self.deloc_energy
-    
+
     def find_charge_density(self):
         """finds the charge density of Pi electrons for each carbon atom in the molecule"""
-        carbon_iter = 0 #allows us to index eigenvectors for the wave function at a specific carbon atom
-        charge_density = [] 
-        while carbon_iter < self.num_carbons: #Loops through carbon atoms to assign charge density
-            sum = 0
-            num_elec = self.num_pi_electrons 
+        carbon_iter = 0  # allows us to index eigenvectors for the wave function at a specific carbon atom
+        charge_density = []
+        while carbon_iter < self.num_carbons:  # Loops through carbon atoms to assign charge density
+            charge_sum = 0
+            num_elec = self.num_pi_electrons
             for eig in self.eigenvectors:
                 if num_elec > 1:
-                    sum += 2*(abs(float(eig[0][carbon_iter]))**2)
+                    charge_sum += 2 * (abs(float(eig[0][carbon_iter])) ** 2)
                     num_elec -= 2
                 elif num_elec == 1:
-                    sum += abs(float(eig[0][carbon_iter]))**2
+                    charge_sum += abs(float(eig[0][carbon_iter])) ** 2
                     num_elec -= 1
                 else:
                     pass
-            charge_density.append(sum)
+            charge_density.append(charge_sum)
             carbon_iter += 1
-    
-        self.charge_density = charge_density #list of charge densities for carbon atoms 1-n
-	    
+
+        self.charge_density = charge_density  # list of charge densities for carbon atoms 1-n
+
     def find_bond_order(self):
         """finds the bond order of molecule, stores as list of values beginning at C1"""
         carbon_iter = 0
         bond_order = []
-        while carbon_iter < self.num_carbons-1:
+        while carbon_iter < self.num_carbons - 1:
             sum = 1
             num_elec = self.num_pi_electrons
             for eig in self.eigenvectors:
                 if num_elec > 1:
-                    sum += 2*(float(eig[0][carbon_iter]*eig[0][carbon_iter+1]))
+                    sum += 2 * (float(eig[0][carbon_iter] * eig[0][carbon_iter + 1]))
                     num_elec -= 2
                 elif num_elec == 1:
-                    sum += float(eig[0][carbon_iter]*eig[0][carbon_iter+1])
+                    sum += float(eig[0][carbon_iter] * eig[0][carbon_iter + 1])
                     num_elec -= 1
                 else:
                     pass
@@ -193,29 +187,28 @@ class Molecule:
             carbon_iter += 1
 
         self.bond_order = bond_order
-    
+
     def normalize_eigenvectors(self):
-        """replaces eigenvectors with normalized float type eigenvectors"""    
+        """replaces eigenvectors with normalized float type eigenvectors"""
+
         for eig in self.eigenvectors:
-            magnitude = 0
-            carbon_iter = 0	    
-            while carbon_iter < self.num_carbons:
-                magnitude += abs(float(eig[0][carbon_iter]))**2
-                carbon_iter += 1
+            magnitude = smp.N(eig[0].norm())                # We are using the norm function to calculate the magnitude
             carbon_iter = 0
             while carbon_iter < self.num_carbons:
-                eig[0][carbon_iter] = float(eig[0][carbon_iter])/magnitude
-                carbon_iter += 1		
+                eig[0][carbon_iter] = float(eig[0][carbon_iter]) / magnitude
+                carbon_iter += 1
+
+
+
 
 """Part A"""
 
 butadiene_huckel = smp.Matrix([[a, b, 0, 0], [b, a, b, 0],
-                               [0, b, a, b], [0, 0, b, a]])       # Create our matrix for the molecule
-butadiene = Molecule("Butadine", butadiene_huckel, 4, 4)      # Create the matrix
-butadiene.generate_eigen()                              # Generate the eigenvalues and eigenvector
+                               [0, b, a, b], [0, 0, b, a]])  # Create our matrix for the molecule
+butadiene = Molecule("Butadine", butadiene_huckel, 4, 4)  # Create the matrix
+butadiene.generate_eigen()  # Generate the eigenvalues and eigenvector
 
-
-#butadiene.set_constants(0, -1)
+# butadiene.set_constants(0, -1)
 butadiene.normalize_eigenvectors()
 butadiene.find_charge_density()
 butadiene.find_bond_order()
@@ -226,3 +219,17 @@ print(butadiene.bond_order)
 print('Normalized Eigenvectors')
 butadiene.print_eigenvectors()
 
+# Benzene
+benzene_huckel = smp.Matrix([[a, b, 0, 0, 0, b], [b, a, b, 0, 0, 0], [0, b, a, b, 0, 0],
+                             [0, 0, b, a, b, 0], [0, 0, 0, b, a, b], [b, 0, 0, 0, b, a]])
+benzene = Molecule("Benzene", benzene_huckel, 6, 6)
+benzene.generate_eigen()
+benzene.set_constants(0, -1)
+print(benzene.eigenvalues)
+benzene.normalize_eigenvectors()
+benzene.find_charge_density()
+benzene.find_bond_order()
+print('Benzene Charge Density', benzene.charge_density)
+print('Benzene Bond Order', benzene.bond_order)
+print('Normalized Eigenvectors')
+benzene.print_eigenvectors()
