@@ -55,6 +55,21 @@ class Molecule:
         # Store the resonance integral values
         self.alpha = alpha
         self.beta = beta
+    
+    def generate_huckel(self):
+        """generates huckel matrix for linear carbon chain"""
+        N = self.num_carbons
+        huckel = smp.zeros(N)
+        for i in range(N):
+            huckel[i,i] = a
+            if i==0:
+                huckel[i,i+1] = b
+            elif i==N-1:
+                huckel[i,i-1] = b
+            else:
+                huckel[i,i+1] = b
+                huckel[i,i-1] = b
+        self.huckel = huckel
 
     def generate_eigen(self):
         """Finds the eigenvalue and eigenvector for the huckel matrix"""
@@ -230,11 +245,12 @@ class Molecule:
 
 butadiene_huckel = smp.Matrix([[a, b, 0, 0], [b, a, b, 0],
                                [0, b, a, b], [0, 0, b, a]])  # Create our matrix for the molecule
-butadiene = Molecule("Butadine", butadiene_huckel, 4, 4)  # Create the matrix
-butadiene.generate_eigen()  # Generate the eigenvalues and eigenvector
 
-butadiene.set_constants(0, -1)
-butadiene.energy_level_plot()
+butadiene = Molecule("Butadine", butadiene_huckel, 4, 10)  # Create the matrix
+# butadiene.generate_eigen()  # Generate the eigenvalues and eigenvector
+
+# butadiene.set_constants(0, -1)
+# butadiene.energy_level_plot()
 # butadiene.normalize_eigenvectors()
 # butadiene.find_charge_density()
 # butadiene.find_bond_order()
@@ -248,10 +264,10 @@ butadiene.energy_level_plot()
 # Benzene
 benzene_huckel = smp.Matrix([[a, b, 0, 0, 0, b], [b, a, b, 0, 0, 0], [0, b, a, b, 0, 0],
                              [0, 0, b, a, b, 0], [0, 0, 0, b, a, b], [b, 0, 0, 0, b, a]])
-benzene = Molecule("Benzene", benzene_huckel, 9, 6)
+benzene = Molecule("Benzene", benzene_huckel, 6, 6)
 benzene.generate_eigen()
-benzene.set_constants(0, -1)
-benzene.energy_level_plot()
+# benzene.set_constants(0, -1)
+# benzene.energy_level_plot()
 # print(benzene.mega_eigen_array)
 # benzene.normalize_eigenvectors()
 # benzene.find_charge_density()
@@ -260,3 +276,10 @@ benzene.energy_level_plot()
 # print('Benzene Bond Order', benzene.bond_order)
 # print('Normalized Eigenvectors')
 # benzene.print_eigenvectors()
+
+#C60
+
+c_huckel = smp.Matrix([])
+c = Molecule("C60", c_huckel, 60, 60)
+c.generate_huckel()
+print(c.huckel)
