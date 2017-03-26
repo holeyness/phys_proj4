@@ -71,6 +71,18 @@ class Molecule:
                 huckel[i,i-1] = b
         self.huckel = huckel
 
+    def add_connections(self, connections):
+        """adds connections to the Huckel matrix, takes a list of tuples and inserts beta into huckel at the specified coordinates"""
+        for i in range(len(connections)):
+            self.huckel[connections[i][0]-1,connections[i][1]-1] = b
+            self.huckel[connections[i][1]-1,connections[i][0]-1] = b
+
+    def delete_connections(self, connections):
+        """deletes connections to the Huckel matrix, takes a list of tuples and inserts zero into huckel at the specified coordinates"""
+        for i in range(len(connections)):
+            self.huckel[connections[i][0]-1,connections[i][1]-1] = 0
+            self.huckel[connections[i][1]-1,connections[i][0]-1] = 0
+	    
     def generate_eigen(self):
         """Finds the eigenvalue and eigenvector for the huckel matrix"""
         # Generates list of tuple (eigenvalues, multiplicity)
@@ -78,7 +90,6 @@ class Molecule:
         for k, v in self.huckel.eigenvals().items():
             self.eigenvalues += v * [k]                               # Add eigenvalues multiplicity times
 
-        print(self.eigenvalues)
         self.eigenvectors = [x[2] for x in self.huckel.eigenvects()]  # The 3rd element contains the eigenvector
         self.mega_eigen_array = self.huckel.eigenvects()
 
@@ -243,43 +254,67 @@ class Molecule:
 
 """Part A"""
 
+#Butadiene
+
 butadiene_huckel = smp.Matrix([[a, b, 0, 0], [b, a, b, 0],
-                               [0, b, a, b], [0, 0, b, a]])  # Create our matrix for the molecule
+                               [0, b, a, b], [0, 0, b, a]])  
+butadiene = Molecule("Butadine", butadiene_huckel, 4, 4)  
 
-butadiene = Molecule("Butadine", butadiene_huckel, 4, 10)  # Create the matrix
-# butadiene.generate_eigen()  # Generate the eigenvalues and eigenvector
+print('----', butadiene.name, '----')
 
-# butadiene.set_constants(0, -1)
-# butadiene.energy_level_plot()
-# butadiene.normalize_eigenvectors()
-# butadiene.find_charge_density()
-# butadiene.find_bond_order()
-# print('Charge Density')
-# print(butadiene.charge_density)
-# print('Bond Order')
-# print(butadiene.bond_order)
-# print('Normalized Eigenvectors')
-# butadiene.print_eigenvectors()
+smp.pprint(butadiene.huckel)
+butadiene.generate_eigen()  
+print(butadiene.eigenvalues)
+butadiene.set_constants(0, -1)
+butadiene.energy_level_plot()
+butadiene.normalize_eigenvectors()
+#butadiene.find_charge_density()
+#butadiene.find_bond_order()
+#print('Charge Density')
+#print(butadiene.charge_density)
+#print('Bond Order')
+#print(butadiene.bond_order)
 
 # Benzene
 benzene_huckel = smp.Matrix([[a, b, 0, 0, 0, b], [b, a, b, 0, 0, 0], [0, b, a, b, 0, 0],
                              [0, 0, b, a, b, 0], [0, 0, 0, b, a, b], [b, 0, 0, 0, b, a]])
 benzene = Molecule("Benzene", benzene_huckel, 6, 6)
 benzene.generate_eigen()
-# benzene.set_constants(0, -1)
-# benzene.energy_level_plot()
-# print(benzene.mega_eigen_array)
-# benzene.normalize_eigenvectors()
-# benzene.find_charge_density()
-# benzene.find_bond_order()
-# print('Benzene Charge Density', benzene.charge_density)
-# print('Benzene Bond Order', benzene.bond_order)
-# print('Normalized Eigenvectors')
-# benzene.print_eigenvectors()
 
-#C60
 
-c_huckel = smp.Matrix([])
-c = Molecule("C60", c_huckel, 60, 60)
-c.generate_huckel()
-print(c.huckel)
+print('----', benzene.name, '----')
+
+smp.pprint(benzene.huckel)
+benzene.generate_eigen()  
+print(benzene.eigenvalues)
+benzene.set_constants(0, -1)
+benzene.energy_level_plot()
+benzene.normalize_eigenvectors()
+#benzene.find_charge_density()
+#benzene.find_bond_order()
+#print('Charge Density')
+#print(benzene.charge_density)
+#print('Bond Order')
+#print(benzene.bond_order)
+
+# Toluene
+toluene_huckel = smp.Matrix([])
+toluene = Molecule("Toluene", toluene_huckel, 7, 7)
+toluene.generate_huckel()
+toluene.add_connections([[1,6]])
+
+
+print('----', toluene.name, '----')
+
+smp.pprint(toluene.huckel)
+toluene.generate_eigen()  
+print(toluene.eigenvalues)
+toluene.set_constants(0, -1)
+toluene.energy_level_plot()
+toluene.normalize_eigenvectors()
+#toluene.find_charge_density()
+#toluene.find_bond_order()
+#print('Charge Density')
+#print(toluene.charge_density)
+#print('Bond Order')
+#print(toluene.bond_order)
