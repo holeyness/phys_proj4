@@ -38,6 +38,11 @@ class Molecule:
         self.beta = None
         self.charge_density = []
         self.bond_order = []
+        self.num_additional_connections = 0
+        self.connections = []
+
+        # This is our internal data structure that contains [(eig_value, # of Electrons)]
+        self.e_per_energy_lvl = []
 
     @staticmethod
     def sort_eigs(eig):
@@ -74,25 +79,43 @@ class Molecule:
 
     def add_connections(self, connections):
         """adds connections to the Huckel matrix, takes a list of tuples and inserts beta into huckel at the specified coordinates"""
+        self.connections = connections
         for i in range(len(connections)):
             self.huckel[connections[i][0]-1, connections[i][1]-1] = b
             self.huckel[connections[i][1]-1, connections[i][0]-1] = b
+        self.num_additional_connections += len(connections)
 
     def delete_connections(self, connections):
         """deletes connections to the Huckel matrix, takes a list of tuples and inserts zero into huckel at the specified coordinates"""
         for i in range(len(connections)):
             self.huckel[connections[i][0]-1, connections[i][1]-1] = 0
             self.huckel[connections[i][1]-1, connections[i][0]-1] = 0
+        self.num_additional_connections -= len(connections)
 
     def generate_eigen(self):
         """Finds the eigenvalue and eigenvector for the huckel matrix"""
+        self.e_per_energy_lvl = []
+        self.eigenvectors = []
+        self.eigenvalues = []
+
         # Generates list of tuple (eigenvalues, multiplicity)
+        self.mega_eigen_array = sorted(self.huckel.eigenvects(), key=self.sort_eigs)
+        for eig in self.mega_eigen_array:
+            self.eigenvalues.append(eig[0])
+            self.eigenvectors.append(eig[2])
 
-        for k, v in self.huckel.eigenvals().items():
-            self.eigenvalues += v * [k]                               # Add eigenvalues multiplicity times
+        # Compile our electron per energy level array
+        electrons_available = self.num_pi_electrons
+        for eig in self.mega_eigen_array:
+            eig_val = eig[0]
+            multiplicity = eig[1]
 
-        self.eigenvectors = [x[2] for x in self.huckel.eigenvects()]  # The 3rd element contains the eigenvector
-        self.mega_eigen_array = self.huckel.eigenvects()
+            if electrons_available >= (multiplicity * 2):
+                self.e_per_energy_lvl.append(tuple([eig_val, 2 * multiplicity]))
+                electrons_available -= 2 * multiplicity
+            else:
+                self.e_per_energy_lvl.append(tuple([eig_val, electrons_available]))
+                electrons_available -= electrons_available
 
     def print_eigenvectors(self):
         """Pretty print the list of vectors"""
@@ -171,87 +194,60 @@ class Molecule:
         plt.show()
 
     def find_deloc_energy(self):
-        #TODO: DOESNT WORK
+        """Calculates the delocalization energy by going through our augmented array and adding up all the energies"""
 
-        if self.beta == 0.0:
-            # Find symbolic solution
-            deloc_energy = 0.47 * b
-
-        else:
-            deloc_energy = 0.47 * self.beta
-
-        num_electrons = self.num_pi_electrons
-        eig_index = 0
-
-        while num_electrons > 0:
-            if num_electrons > 1:
-                deloc_energy += 2 * sorted(self.eigenvalues, key=self.sort_eigs)[eig_index]
-                eig_index += 1
-                num_electrons -= 2
-            elif num_electrons == 1:
-                deloc_energy += sorted(self.eigenvalues, key=self.sort_eigs)[eig_index]
-                eig_index += 1
-                num_electrons -= 1
-            else:
-                pass
+        deloc_energy = 0.0
+        for e, num_electrons in self.e_per_energy_lvl:
+            deloc_energy += e * num_electrons
 
         self.deloc_energy = deloc_energy
 
         return self.deloc_energy
 
     def find_charge_density(self):
-        #TODO: DOESNT WORK, modify with new overlaying of electrions
+        # TODO: ???
         """finds the charge density of Pi electrons for each carbon atom in the molecule"""
-        carbon_iter = 0  # allows us to index eigenvectors for the wave function at a specific carbon atom
         charge_density = []
-        while carbon_iter < self.num_carbons:  # Loops through carbon atoms to assign charge density
-            charge_sum = 0
-            num_elec = self.num_pi_electrons
-            for eig in self.mega_eigen_array:
-                if num_elec > 1:
-                    charge_sum += eig[1] * 2 * (abs(float(eig[2][carbon_iter])) ** 2)
-                    num_elec -= 2 * eig[1]
-                elif num_elec == 1:
-                    charge_sum += abs(float(eig[2][carbon_iter])) ** 2
-                    num_elec -= 1
-                else:
-                    pass
+
+        for c in range(self.num_carbons):                           # For each carbon atom
+            charge_sum = 0.0
+            for eig_index in range(len(self.eigenvectors)):         # For each eigenvector
+                num_elec = self.e_per_energy_lvl[eig_index][1]
+                charge_sum += num_elec * (self.eigenvectors[eig_index][0][c] ** 2)
+
             charge_density.append(charge_sum)
-            carbon_iter += 1
 
         self.charge_density = charge_density  # list of charge densities for carbon atoms 1-n
 
     def find_bond_order(self):
-        #TODO: doesnt work
         """finds the bond order of molecule, stores as list of values beginning at C1"""
-        carbon_iter = 0
-        bond_order = []
-        while carbon_iter < self.num_carbons - 1:
-            sum = 1
-            num_elec = self.num_pi_electrons
-            for eig in self.eigenvectors:
-                if num_elec > 1:
-                    sum += 2 * (float(eig[0][carbon_iter] * eig[0][carbon_iter + 1]))
-                    num_elec -= 2
-                elif num_elec == 1:
-                    sum += float(eig[0][carbon_iter] * eig[0][carbon_iter + 1])
-                    num_elec -= 1
-                else:
-                    pass
-            bond_order.append(sum)
-            carbon_iter += 1
 
-        self.bond_order = bond_order
+        bond_order = []
+
+        for c in range(self.num_carbons - 1 + self.num_additional_connections):    # For each carbon atom - 1
+            bond_sum = 1.0
+            for eig_index in range(len(self.eigenvectors)):             # For each eigenvector
+                num_elec = self.e_per_energy_lvl[eig_index][1]
+
+                if c < self.num_carbons - 1:
+                    bond_sum += num_elec * (self.eigenvectors[eig_index][0][c]) * \
+                                self.eigenvectors[eig_index][0][(c + 1)]
+                else:
+
+                    bond_sum += num_elec * self.eigenvectors[eig_index][0][self.connections[c % self.num_carbons][0]] \
+                                * self.eigenvectors[eig_index][0][self.connections[c % self.num_carbons][1]]
+
+            bond_order.append(bond_sum)
+
+        self.bond_order = bond_order            # list of charge densities for carbon atoms 1-n
 
     def normalize_eigenvectors(self):
         """replaces eigenvectors with normalized float type eigenvectors"""
 
         for eig in self.eigenvectors:
             magnitude = smp.N(eig[0].norm())                # We are using the norm function to calculate the magnitude
-            carbon_iter = 0
-            while carbon_iter < self.num_carbons:
-                eig[0][carbon_iter] = float(eig[0][carbon_iter]) / magnitude
-                carbon_iter += 1
+            for c in range(self.num_carbons):
+                eig[0][c] = float(eig[0][c]) / magnitude
 
 
 
@@ -260,74 +256,78 @@ class Molecule:
 
 #Butadiene
 
-# butadiene_huckel = smp.Matrix([[a, b, 0, 0], [b, a, b, 0],
-#                                [0, b, a, b], [0, 0, b, a]])
-# butadiene = Molecule("Butadine", butadiene_huckel, 4, 4)
-#
-# print('----', butadiene.name, '----')
-#
-# smp.pprint(butadiene.huckel)
-# butadiene.generate_eigen()
+butadiene_huckel = smp.Matrix([[a, b, 0, 0], [b, a, b, 0],
+                               [0, b, a, b], [0, 0, b, a]])
+butadiene = Molecule("Butadine", butadiene_huckel, 4, 4)
+
+print('----', butadiene.name, '----')
+
+smp.pprint(butadiene.huckel)
+butadiene.generate_eigen()
 # print(butadiene.eigenvalues)
 # butadiene.set_constants(0, -1)
 # butadiene.energy_level_plot()
-# butadiene.normalize_eigenvectors()
-#butadiene.find_charge_density()
-#butadiene.find_bond_order()
-#print('Charge Density')
-#print(butadiene.charge_density)
-#print('Bond Order')
-#print(butadiene.bond_order)
+butadiene.normalize_eigenvectors()
+butadiene.find_charge_density()
+print('Charge Density', butadiene.charge_density)
+butadiene.find_deloc_energy()
+print('Deloc Energy', butadiene.deloc_energy)
+butadiene.find_bond_order()
+print('Bond Order', butadiene.bond_order)
+
 
 # # Benzene
-# benzene_huckel = smp.Matrix([[a, b, 0, 0, 0, b], [b, a, b, 0, 0, 0], [0, b, a, b, 0, 0],
-#                              [0, 0, b, a, b, 0], [0, 0, 0, b, a, b], [b, 0, 0, 0, b, a]])
-# benzene = Molecule("Benzene", benzene_huckel, 6, 6)
-# benzene.generate_eigen()
+
+benzene = Molecule("Benzene", smp.Matrix([]), 6, 6)
+benzene.generate_huckel()
+benzene.add_connections([[1, 6]])
+benzene.generate_eigen()
 #
 #
-# print('----', benzene.name, '----')
+print('----', benzene.name, '----')
 #
-# smp.pprint(benzene.huckel)
-# benzene.generate_eigen()
-# print(benzene.eigenvalues)
-# benzene.set_constants(0, -1)
-# benzene.energy_level_plot()
-# benzene.normalize_eigenvectors()
-# #benzene.find_charge_density()
-# #benzene.find_bond_order()
-# #print('Charge Density')
-# #print(benzene.charge_density)
-# #print('Bond Order')
-# #print(benzene.bond_order)
-#
-# # Toluene
-# toluene_huckel = smp.Matrix([])
-# toluene = Molecule("Toluene", toluene_huckel, 7, 7)
-# toluene.generate_huckel()
-# toluene.add_connections([[1, 6]])
-#
-#
-# print('----', toluene.name, '----')
-#
-# smp.pprint(toluene.huckel)
-# toluene.set_constants(0, -1)
-# toluene.generate_eigen()
-# print(toluene.eigenvalues)
-# toluene.energy_level_plot()
-# toluene.normalize_eigenvectors()
-#toluene.find_charge_density()
-#toluene.find_bond_order()
-#print('Charge Density')
-#print(toluene.charge_density)
-#print('Bond Order')
-#print(toluene.bond_order)
+smp.pprint(benzene.huckel)
+benzene.set_constants(0, -1)
+benzene.energy_level_plot()
+benzene.normalize_eigenvectors()
+benzene.find_charge_density()
+print('Charge Density', benzene.charge_density)
+benzene.find_deloc_energy()
+print('Deloc Energy', benzene.deloc_energy)
+benzene.find_bond_order()
+print('Bond Order', benzene.bond_order)
+
+# Toluene
+toluene = Molecule("Toluene", smp.Matrix([]), 7, 7)
+print('----', toluene.name, '----')
+toluene.generate_huckel()
+toluene.add_connections([[1, 6]])
+smp.pprint(toluene.huckel)
+toluene.set_constants(0, -1)
+toluene.generate_eigen()
+toluene.energy_level_plot()
+toluene.normalize_eigenvectors()
+toluene.find_charge_density()
+print('Charge Density', toluene.charge_density)
+toluene.find_deloc_energy()
+print('Deloc Energy', toluene.deloc_energy)
+toluene.find_bond_order()
+print('Bond Order', toluene.bond_order)
 
 # Napthalen
 napthalene = Molecule("Napthalene", smp.Matrix([]), 10, 10)
 napthalene.generate_huckel()
 napthalene.add_connections([[5, 10], [1, 6]])
+print('----', napthalene.name, '----')
 smp.pprint(napthalene.huckel)
 napthalene.set_constants(0, -1)
 napthalene.generate_eigen()
-print(napthalene.eigenvalues)
+
+napthalene.energy_level_plot()
+napthalene.normalize_eigenvectors()
+napthalene.find_charge_density()
+print('Charge Density', napthalene.charge_density)
+napthalene.find_deloc_energy()
+print('Deloc Energy', napthalene.deloc_energy)
+napthalene.find_bond_order()
+print('Bond Order', napthalene.bond_order)
