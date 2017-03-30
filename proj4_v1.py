@@ -224,18 +224,22 @@ class Molecule:
 
         bond_order = []
 
-        for c in range(self.num_carbons - 1 + self.num_additional_connections):    # For each carbon atom - 1
+        for c in range(self.num_carbons - 1 + self.num_additional_connections):    # For each carbon atom - 1 plus extra bonds between carbons
+            
             bond_sum = 1.0
+
             for eig_index in range(len(self.eigenvectors)):             # For each eigenvector
                 num_elec = self.e_per_energy_lvl[eig_index][1]
+                
+		#If the index c goes beyond the number of bonds that would be present in a linear molecule of with the same number of carbon atoms, then
+		# the bond order for the added connections, i.e bonds found outside of the off-diagonals in the Huckel matrix, are calculated
 
                 if c < self.num_carbons - 1:
                     bond_sum += num_elec * (self.eigenvectors[eig_index][0][c]) * \
                                 self.eigenvectors[eig_index][0][(c + 1)]
                 else:
-
-                    bond_sum += num_elec * self.eigenvectors[eig_index][0][self.connections[c % self.num_carbons][0]] \
-                                * self.eigenvectors[eig_index][0][self.connections[c % self.num_carbons][1]]
+                    bond_sum += num_elec * self.eigenvectors[eig_index][0][self.connections[c % (self.num_carbons-1)][0]-1] \
+                                * self.eigenvectors[eig_index][0][self.connections[c % (self.num_carbons-1)][1]-1]
 
             bond_order.append(bond_sum)
 
@@ -265,15 +269,15 @@ print('----', butadiene.name, '----')
 smp.pprint(butadiene.huckel)
 butadiene.generate_eigen()
 # print(butadiene.eigenvalues)
-# butadiene.set_constants(0, -1)
-# butadiene.energy_level_plot()
+butadiene.find_deloc_energy()
+butadiene.set_constants(0, -1)
+butadiene.energy_level_plot()
 butadiene.normalize_eigenvectors()
 butadiene.find_charge_density()
-print('Charge Density', butadiene.charge_density)
-butadiene.find_deloc_energy()
-print('Deloc Energy', butadiene.deloc_energy)
+print('Charge Density :: ', butadiene.charge_density)
+print('Deloc Energy   :: ', butadiene.deloc_energy)
 butadiene.find_bond_order()
-print('Bond Order', butadiene.bond_order)
+print('Bond Order     :: ', butadiene.bond_order)
 
 
 # # Benzene
@@ -287,15 +291,15 @@ benzene.generate_eigen()
 print('----', benzene.name, '----')
 #
 smp.pprint(benzene.huckel)
+benzene.find_deloc_energy()
 benzene.set_constants(0, -1)
 benzene.energy_level_plot()
 benzene.normalize_eigenvectors()
 benzene.find_charge_density()
-print('Charge Density', benzene.charge_density)
-benzene.find_deloc_energy()
-print('Deloc Energy', benzene.deloc_energy)
+print('Charge Density :: ', benzene.charge_density)
+print('Deloc Energy   :: ', benzene.deloc_energy)
 benzene.find_bond_order()
-print('Bond Order', benzene.bond_order)
+print('Bond Order     :: ', benzene.bond_order)
 
 # Toluene
 toluene = Molecule("Toluene", smp.Matrix([]), 7, 7)
@@ -303,16 +307,16 @@ print('----', toluene.name, '----')
 toluene.generate_huckel()
 toluene.add_connections([[1, 6]])
 smp.pprint(toluene.huckel)
+toluene.find_deloc_energy()
 toluene.set_constants(0, -1)
 toluene.generate_eigen()
 toluene.energy_level_plot()
 toluene.normalize_eigenvectors()
 toluene.find_charge_density()
-print('Charge Density', toluene.charge_density)
-toluene.find_deloc_energy()
-print('Deloc Energy', toluene.deloc_energy)
+print('Charge Density :: ', toluene.charge_density)
+print('Deloc Energy   :: ', toluene.deloc_energy)
 toluene.find_bond_order()
-print('Bond Order', toluene.bond_order)
+print('Bond Order     :: ', toluene.bond_order)
 
 # Napthalen
 napthalene = Molecule("Napthalene", smp.Matrix([]), 10, 10)
@@ -320,14 +324,13 @@ napthalene.generate_huckel()
 napthalene.add_connections([[5, 10], [1, 6]])
 print('----', napthalene.name, '----')
 smp.pprint(napthalene.huckel)
+napthalene.find_deloc_energy()
 napthalene.set_constants(0, -1)
 napthalene.generate_eigen()
-
 napthalene.energy_level_plot()
 napthalene.normalize_eigenvectors()
 napthalene.find_charge_density()
-print('Charge Density', napthalene.charge_density)
-napthalene.find_deloc_energy()
-print('Deloc Energy', napthalene.deloc_energy)
+print('Charge Density :: ', napthalene.charge_density)
+print('Deloc Energy   :: ', napthalene.deloc_energy)
 napthalene.find_bond_order()
-print('Bond Order', napthalene.bond_order)
+print('Bond Order     :: ', napthalene.bond_order)
