@@ -262,100 +262,100 @@ class Molecule:
 
 
 """Part A"""
+if __name__ == '__main__':
+    #Butadiene
+    #
+    # butadiene_huckel = smp.Matrix([[a, b, 0, 0], [b, a, b, 0],
+    #                                [0, b, a, b], [0, 0, b, a]])
+    # butadiene = Molecule("Butadine", butadiene_huckel, 4, 4, 2)
+    #
+    # print('----', butadiene.name, '----')
+    #
+    # smp.pprint(butadiene.huckel)
+    # butadiene.generate_eigen()
+    # # print(butadiene.eigenvalues)
+    # butadiene.find_deloc_energy()
+    # butadiene.set_constants(0, -1)
+    # butadiene.energy_level_plot()
+    # butadiene.normalize_eigenvectors()
+    # butadiene.find_charge_density()
+    # print('Charge Density :: ', butadiene.charge_density)
+    # print('Deloc Energy   :: ', butadiene.deloc_energy)
+    # butadiene.find_bond_order()
+    # print('Bond Order     :: ', butadiene.bond_order)
 
-#Butadiene
-#
-# butadiene_huckel = smp.Matrix([[a, b, 0, 0], [b, a, b, 0],
-#                                [0, b, a, b], [0, 0, b, a]])
-# butadiene = Molecule("Butadine", butadiene_huckel, 4, 4, 2)
-#
-# print('----', butadiene.name, '----')
-#
-# smp.pprint(butadiene.huckel)
-# butadiene.generate_eigen()
-# # print(butadiene.eigenvalues)
-# butadiene.find_deloc_energy()
-# butadiene.set_constants(0, -1)
-# butadiene.energy_level_plot()
-# butadiene.normalize_eigenvectors()
-# butadiene.find_charge_density()
-# print('Charge Density :: ', butadiene.charge_density)
-# print('Deloc Energy   :: ', butadiene.deloc_energy)
-# butadiene.find_bond_order()
-# print('Bond Order     :: ', butadiene.bond_order)
-
-# Benzene
-# benzene = Molecule("Benzene", smp.Matrix([]), 6, 6, 3)
-# benzene.generate_huckel()
-# benzene.add_connections([[1, 6]])
-# benzene.generate_eigen()
-# #
-# #
-# print('----', benzene.name, '----')
-# #
-# smp.pprint(benzene.huckel)
-# benzene.find_deloc_energy()
-# benzene.set_constants(0, -1)
-# benzene.energy_level_plot()
-# benzene.normalize_eigenvectors()
-# benzene.find_charge_density()
-# print('Charge Density :: ', benzene.charge_density)
-# print('Deloc Energy   :: ', benzene.deloc_energy)
-# benzene.find_bond_order()
-# print('Bond Order     :: ', benzene.bond_order)
+    # Benzene
+    # benzene = Molecule("Benzene", smp.Matrix([]), 6, 6, 3)
+    # benzene.generate_huckel()
+    # benzene.add_connections([[1, 6]])
+    # benzene.generate_eigen()
+    # #
+    # #
+    # print('----', benzene.name, '----')
+    # #
+    # smp.pprint(benzene.huckel)
+    # benzene.find_deloc_energy()
+    # benzene.set_constants(0, -1)
+    # benzene.energy_level_plot()
+    # benzene.normalize_eigenvectors()
+    # benzene.find_charge_density()
+    # print('Charge Density :: ', benzene.charge_density)
+    # print('Deloc Energy   :: ', benzene.deloc_energy)
+    # benzene.find_bond_order()
+    # print('Bond Order     :: ', benzene.bond_order)
 
 
-# # Toluene
-# toluene = Molecule("Toluene", smp.Matrix([]), 7, 7, 3)
-# print('----', toluene.name, '----')
-# toluene.generate_huckel()
-# toluene.add_connections([[1, 6]])
-# smp.pprint(toluene.huckel)
-# toluene.set_constants(0, -1)
-# toluene.generate_eigen()
-# toluene.find_deloc_energy()
-# toluene.energy_level_plot()
-# toluene.normalize_eigenvectors()
-# toluene.find_charge_density()
-# print('Charge Density :: ', toluene.charge_density)
-# print('Deloc Energy   :: ', toluene.deloc_energy)
-# toluene.find_bond_order()
-# print('Bond Order     :: ', toluene.bond_order)
-#
-# # Napthalen
-napthalene = Molecule("Napthalene", smp.Matrix([]), 10, 10, 5)
-napthalene.generate_huckel()
-napthalene.add_connections([[5, 10], [1, 6]])
-print('----', napthalene.name, '----')
-smp.pprint(napthalene.huckel)
-napthalene.set_constants(0, -1)
-napthalene.generate_eigen()
-napthalene.find_deloc_energy()
-napthalene.energy_level_plot()
-napthalene.normalize_eigenvectors()
-napthalene.find_charge_density()
-print('Charge Density :: ', napthalene.charge_density)
-print('Deloc Energy   :: ', napthalene.deloc_energy)
-napthalene.find_bond_order()
-print('Bond Order     :: ', napthalene.bond_order)
-print(napthalene.eigenvectors)
+    # # Toluene
+    # toluene = Molecule("Toluene", smp.Matrix([]), 7, 7, 3)
+    # print('----', toluene.name, '----')
+    # toluene.generate_huckel()
+    # toluene.add_connections([[1, 6]])
+    # smp.pprint(toluene.huckel)
+    # toluene.set_constants(0, -1)
+    # toluene.generate_eigen()
+    # toluene.find_deloc_energy()
+    # toluene.energy_level_plot()
+    # toluene.normalize_eigenvectors()
+    # toluene.find_charge_density()
+    # print('Charge Density :: ', toluene.charge_density)
+    # print('Deloc Energy   :: ', toluene.deloc_energy)
+    # toluene.find_bond_order()
+    # print('Bond Order     :: ', toluene.bond_order)
+    #
+    # # Napthalen
+    napthalene = Molecule("Napthalene", smp.Matrix([]), 10, 10, 5)
+    napthalene.generate_huckel()
+    napthalene.add_connections([[5, 10], [1, 6]])
+    print('----', napthalene.name, '----')
+    smp.pprint(napthalene.huckel)
+    napthalene.set_constants(0, -1)
+    napthalene.generate_eigen()
+    napthalene.find_deloc_energy()
+    napthalene.energy_level_plot()
+    napthalene.normalize_eigenvectors()
+    napthalene.find_charge_density()
+    print('Charge Density :: ', napthalene.charge_density)
+    print('Deloc Energy   :: ', napthalene.deloc_energy)
+    napthalene.find_bond_order()
+    print('Bond Order     :: ', napthalene.bond_order)
+    print(napthalene.eigenvectors)
 
-# BuckyBall
-# bucky = Molecule("Buckminsterfullerene", smp.Matrix([]), 60, 60, 30)
-# bucky.generate_huckel()
-# bucky.add_connections([[1, 5], [1, 9], [2, 12], [3, 15], [4, 18], [6, 20], [7, 22], [8, 25], [10, 26], [11, 29],
-#                        [13, 30], [14, 33], [16, 34], [17, 37], [19, 38], [21, 40], [23, 42], [24, 44], [27, 45],
-#                        [28, 47], [31, 48], [32, 50], [35, 51], [36, 53], [39, 54], [41, 55], [43, 57], [46, 58],
-#                        [49, 59], [52, 60], [56, 60]])
-# print('---', bucky.name, '-----')
-# smp.pprint(bucky.huckel)
-# bucky.set_constants(0, -1)
-# bucky.generate_eigen()
-# bucky.find_deloc_energy()
-# bucky.energy_level_plot()
-# bucky.normalize_eigenvectors()
-# bucky.find_charge_density()
-# bucky.find_bond_order()
-# print('Charge Density', bucky.charge_density)
-# print('Deloc Energy', bucky.deloc_energy)
-# print('Bond Order', bucky.bond_order)
+    # BuckyBall
+    # bucky = Molecule("Buckminsterfullerene", smp.Matrix([]), 60, 60, 30)
+    # bucky.generate_huckel()
+    # bucky.add_connections([[1, 5], [1, 9], [2, 12], [3, 15], [4, 18], [6, 20], [7, 22], [8, 25], [10, 26], [11, 29],
+    #                        [13, 30], [14, 33], [16, 34], [17, 37], [19, 38], [21, 40], [23, 42], [24, 44], [27, 45],
+    #                        [28, 47], [31, 48], [32, 50], [35, 51], [36, 53], [39, 54], [41, 55], [43, 57], [46, 58],
+    #                        [49, 59], [52, 60], [56, 60]])
+    # print('---', bucky.name, '-----')
+    # smp.pprint(bucky.huckel)
+    # bucky.set_constants(0, -1)
+    # bucky.generate_eigen()
+    # bucky.find_deloc_energy()
+    # bucky.energy_level_plot()
+    # bucky.normalize_eigenvectors()
+    # bucky.find_charge_density()
+    # bucky.find_bond_order()
+    # print('Charge Density', bucky.charge_density)
+    # print('Deloc Energy', bucky.deloc_energy)
+    # print('Bond Order', bucky.bond_order)
