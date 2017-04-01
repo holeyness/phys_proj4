@@ -24,6 +24,7 @@ class Graphene(Molecule):
             """Finds the x, y coord of a specific carbon atom"""
             pass
 
+        return Carbon(0, 0, 0, mags, id)
 
 """Part 2: Armchair Graphene"""
 if __name__ == '__main__':
