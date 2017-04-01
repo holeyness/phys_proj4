@@ -2,6 +2,13 @@
 
 # from proj4_v1 import Molecule
 import sympy as smp
+import numpy as np
+import sympy as smp
+import scipy as sp
+import math
+import matplotlib.pyplot as plt
+from collections import OrderedDict
+from operator import itemgetter
 
 a, b = smp.symbols('a, b')  # Generate symbols so we can use them in our fancy matrix
 
@@ -247,11 +254,12 @@ class Molecule:
                 eig[0][c] = float(eig[0][c]) / magnitude
 
 class Carbon:
-    def __init__(self, x, y, charge, magnitude, id):
+    def __init__(self, x, y, charge, magnitudes, id):
         self.pos = (x, y)
         self.charge = charge
         self.psi_magnitudes = magnitudes
         self.id = id        # Which carbon atom it is?
+
 
 class Graphene(Molecule):
     def __init__(self, *args):
@@ -259,7 +267,6 @@ class Graphene(Molecule):
         self.carbons = []                           # List of Carbon Atoms
 
     def generate_carbon(self, id):
-        print(self.eigenvectors)
         mags = [(abs(eig[id - 1][0]) ** 2) for eig in self.eigenvectors]
 
 
