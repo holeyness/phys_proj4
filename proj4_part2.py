@@ -37,6 +37,8 @@ if __name__ == '__main__':
     print('---', armchair.name, '---')
     smp.pprint(armchair.huckel)
     armchair.generate_eigen()
+    print('ev', armchair.eigenvalues)
+    print('ev', armchair.eigenvectors)
 
 
     # Zigzag
@@ -48,3 +50,5 @@ if __name__ == '__main__':
     print('---', zigzag.name, '---')
     smp.pprint(zigzag.huckel)
     zigzag.generate_eigen()
+    print('ev', zigzag.eigenvalues)
+    print('ev', zigzag.eigenvectors)
