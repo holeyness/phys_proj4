@@ -33,7 +33,8 @@ class Molecule:
         self.eigenvalues = []
         self.eigenvectors = []
         self.normalized_eigenvectors = []
-        self.mega_eigen_array = []         # Each key value pair will be eigenval: multiplicity
+        self.eigval_eigvect = []         # Associate Eigenvalue with its Eigenvect
+        self.eigval_multiplicity = []
         self.num_pi_electrons = num_pi_electrons
         self.deloc_energy = 0.0
         self.alpha = None
@@ -46,6 +47,7 @@ class Molecule:
 
         # This is our internal data structure that contains [(eig_value, # of Electrons)]
         self.e_per_energy_lvl = []
+        self.e_per_eigen_vect = []
 
     def __str__(self):
         """Create the string representation for the molecule"""
@@ -95,33 +97,67 @@ class Molecule:
 
     def generate_eigen(self):
         """Finds the eigenvalue and eigenvector for the huckel matrix"""
+        assert(self.alpha is not None)
+
+        # Reset our arrays
+        self.eigenvalues = []
+        self.eigenvectors = []
+        self.eigval_multiplicity = []
+        self.eigval_eigvect = []
 
         e_vals, e_vects = LA.eig(self.huckel)                     # Generate using Numpy's eigenvals
         e_vals = np.around(e_vals, decimals=5)
-        freq_dict = collections.Counter(e_vals)
+        freq_dict = collections.Counter(e_vals)                   # Counts up # of Eigenvalue and their occurences
+        self.eigval_multiplicity = sorted(freq_dict.items(), key=lambda x: x[0])
+
         for i in range(len(e_vals)):
             eigenvalue = e_vals[i]
-            mega_tuple = tuple([eigenvalue, freq_dict[eigenvalue], e_vects[:, i]])
-            self.mega_eigen_array.append(mega_tuple)
+            mega_tuple = tuple([eigenvalue, e_vects[:, i]])
+            self.eigval_eigvect.append(mega_tuple)
 
-        self.mega_eigen_array = sorted(self.mega_eigen_array, key=lambda x: x[0])
-        for eig_set in self.mega_eigen_array:
+        # Sort our eigval_eigvect list
+        self.eigval_eigvect.sort(key=lambda x: x[0])
+
+        for eig_set in self.eigval_eigvect:
             self.eigenvalues = eig_set[0]
-            self.eigenvectors.append(eig_set[2].tolist())
+            self.eigenvectors.append(eig_set[1].tolist())
 
         self.e_per_energy_lvl = []
 
         # Compile our electron per energy level array
         electrons_available = self.num_pi_electrons
-        for eig_set in self.mega_eigen_array:
-            eig_val = eig_set[0]
-            multiplicity = eig_set[1]
+        for eig_val_multiplicity in self.eigval_multiplicity:
+            eig_val = eig_val_multiplicity[0]
+            multiplicity = eig_val_multiplicity[1]
             if electrons_available >= (multiplicity * 2):
                 self.e_per_energy_lvl.append(tuple([eig_val, 2 * multiplicity]))
                 electrons_available -= 2 * multiplicity
             else:
                 self.e_per_energy_lvl.append(tuple([eig_val, electrons_available]))
                 electrons_available -= electrons_available
+
+        self.e_per_eigen_vect = []
+        e_per_energy_lvl_copy = [x for x in self.e_per_energy_lvl]
+
+        for eig_set in self.eigval_eigvect:
+            eig_val = eig_set[0]
+            eig_vect = eig_set[1]
+            electrons = 0
+
+            for electron_index in range(len(e_per_energy_lvl_copy)):
+                if e_per_energy_lvl_copy[electron_index][0] == eig_val:
+                    # We have a match
+                    if e_per_energy_lvl_copy[electron_index][1] > 2:
+                        # pull out 2
+                        electrons = 2
+                        e_per_energy_lvl_copy[electron_index] = tuple([e_per_energy_lvl_copy[electron_index][0],
+                                                                       e_per_energy_lvl_copy[electron_index][1] - 2])
+                    else:
+                        # Pull out as many as it has
+                        electrons = e_per_energy_lvl_copy[electron_index][1]
+                        e_per_energy_lvl_copy[electron_index] = tuple([e_per_energy_lvl_copy[electron_index][0], 0])
+
+            self.e_per_eigen_vect.append(tuple([eig_vect, electrons]))
 
     def find_nodes(self):
         """Finds the nodes for the Eigenvector"""
@@ -151,8 +187,8 @@ class Molecule:
         up_arrow = u'$\u2191$'
 
         electrons_used = self.num_pi_electrons
-        max_multiplicity = max(self.mega_eigen_array, key=itemgetter(1))[1]
-        for eig in self.mega_eigen_array:
+        max_multiplicity = max(self.eigval_multiplicity, key=itemgetter(1))[1]
+        for eig in self.eigval_multiplicity:
             eig_val = eig[0]
             if eig[1] == 1:
                 plt.axhline(eig[0])  # Draw the eigenvalues as lines on the graph
@@ -210,15 +246,14 @@ class Molecule:
         return self.deloc_energy
 
     def find_charge_density(self):
-        #TODO: DOESNT WORK
         """finds the charge density of Pi electrons for each carbon atom in the molecule"""
         charge_density = []
 
         for c in range(self.num_carbons):                           # For each carbon atom
             charge_sum = 0.0
-            for eig_index in range(len(self.eigenvectors)):         # For each eigenvector
-                num_elec = self.e_per_energy_lvl[eig_index][1]
-                charge_sum += num_elec * (self.eigenvectors[eig_index][c][0] ** 2)
+            for eig_e in self.e_per_eigen_vect:
+                eig_vect_val = (eig_e[0][c].tolist())[0][0]
+                charge_sum += eig_e[1] * (abs(eig_vect_val) ** 2)
 
             charge_density.append(charge_sum)
 
@@ -235,19 +270,18 @@ class Molecule:
             
             bond_sum = 1.0
 
-            for eig_index in range(len(self.eigenvectors)):             # For each eigenvector
-                num_elec = self.e_per_energy_lvl[eig_index][1]
-                
-                """If the index c goes beyond the number of bonds that would be present in a linear molecule of with
-                the same number of carbon atoms, then the bond order for the added connections, i.e bonds found
-                outside of the off-diagonals in the Huckel matrix, are calculated"""
-
+            for eigv_e in self.e_per_eigen_vect:
+                num_elec = eigv_e[1]
                 if c < self.num_carbons - 1:
-                    bond_sum += num_elec * (self.eigenvectors[eig_index][c][0]) * \
-                                self.eigenvectors[eig_index][(c + 1)][0]
+                    eigvector_at_c = (eigv_e[0][c].tolist())[0][0]
+                    eigvector_at_c1= (eigv_e[0][c + 1].tolist())[0][0]
+                    bond_sum += num_elec * eigvector_at_c * eigvector_at_c1
                 else:
-                    bond_sum += num_elec * self.eigenvectors[eig_index][self.connections[c % (self.num_carbons-1)][0]-1][0] \
-                                * self.eigenvectors[eig_index][self.connections[c % (self.num_carbons-1)][1]-1][0]
+                    first_eigv_index = self.connections[c % (self.num_carbons-1)][0]-1
+                    eigv_1 = (eigv_e[0][first_eigv_index].tolist())[0][0]
+                    second_eigv_index = self.connections[c % (self.num_carbons-1)][1] - 1
+                    eigv_2 = (eigv_e[0][second_eigv_index].tolist())[0][0]
+                    bond_sum += num_elec * eigv_1 * eigv_2
 
             bond_order.append(bond_sum)
 
@@ -303,8 +337,8 @@ if __name__ == '__main__':
     print('Deloc Energy   :: ', toluene.deloc_energy)
     toluene.find_bond_order()
     print('Bond Order     :: ', toluene.bond_order)
-    #
-    # # Napthalen
+    # #
+    # # # Napthalen
     napthalene = Molecule("Napthalene", np.matrix([]), 10, 10, 5)
     napthalene.generate_huckel()
     napthalene.add_connections([[5, 10], [1, 6]])
@@ -319,8 +353,8 @@ if __name__ == '__main__':
     napthalene.find_bond_order()
     print('Bond Order     :: ', napthalene.bond_order)
     print(napthalene.eigenvectors)
-
-    # BuckyBall
+    #
+    # # BuckyBall
     bucky = Molecule("Buckminsterfullerene", np.matrix([]), 60, 60, 30)
     bucky.generate_huckel()
     bucky.add_connections([[1, 5], [1, 9], [2, 12], [3, 15], [4, 18], [6, 20], [7, 22], [8, 25], [10, 26], [11, 29],
