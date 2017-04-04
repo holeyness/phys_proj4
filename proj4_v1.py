@@ -97,6 +97,7 @@ class Molecule:
         """Finds the eigenvalue and eigenvector for the huckel matrix"""
 
         e_vals, e_vects = LA.eig(self.huckel)                     # Generate using Numpy's eigenvals
+        e_vals = np.around(e_vals, decimals=5)
         freq_dict = collections.Counter(e_vals)
         for i in range(len(e_vals)):
             eigenvalue = e_vals[i]
