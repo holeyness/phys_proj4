@@ -3,6 +3,7 @@
 from proj4_v1 import Molecule, a, b
 import numpy as np
 import matplotlib.pyplot as plt
+import copy
 
 class Carbon:
     def __init__(self, x, y, magnitudes, id):
@@ -18,12 +19,42 @@ class Graphene(Molecule):
         self.prev_id = 0 # Stores the id of the most recently generated carbon
         self.current_row = 1 # Stores the row of hexagons that the most recently generated carbon belongs to
 
-    def generate_carbon(self, id, m, n): #m is number of hexagon rows, n is number of hexagon columns
+    def generate_carbon(self, id, m, n, position_set): #m is number of hexagon rows, n is number of hexagon columns
         """Mint a new Carbon atom"""
         mags = [(abs(eig[id - 1][0]) ** 2) for eig in self.eigenvectors]
-        position = self.find_position(id, m, n)
+        if position_set == 'find':
+            position = self.find_position(id, m, n)
+        else:
+            position = position_set
         return Carbon(position[0], position[1], mags, id)
 
+    def zig_zipper(self, m, n):
+        """creates row of linking carbons to wrap zigzag"""
+        a = 0.5 # Short leg of 30-60-90 triangle
+        b = float((3**(1/2.0))/2.0) # long leg of 30-60-90 triangle
+        carb_iter = self.num_carbons - (2*n + 1)
+        pull_tab = copy.copy(self.carbons[carb_iter])
+        self.carbons[carb_iter + 1].pos = (pull_tab.pos[0], pull_tab.pos[1]-2*b)
+        t = copy.copy(self.carbons[carb_iter + 1])
+        if m % 2 == 0:
+            dist = 2
+            for i in range(2*n-1):
+                self.carbons[(carb_iter+2+i)].pos = (t.pos[0]-dist, t.pos[1])
+                t = copy.copy(self.carbons[(carb_iter+2+i)])
+                if dist == 2:
+                    dist = 1
+                else:
+                    dist = 2
+
+        else:
+            dist = 2
+            for i in range(2*n-1):
+                self.carbons[(carb_iter+2+i)].pos = (t.pos[0]+dist, t.pos[1])
+                t = copy.copy(self.carbons[(carb_iter+2+i)])
+                if dist == 2:
+                    dist = 1
+                else:
+                    dist = 2
 
     def find_position(self, id, m, n):
         """Finds the x, y coord of a specific carbon atom"""
@@ -161,7 +192,7 @@ class Graphene(Molecule):
     def generate_carbons(self, m, n):
         """generates the carbon atoms for a graphene molecule of type 'self.name' and of block size mxn"""
         for i in range(self.num_carbons):
-            self.carbons.append(self.generate_carbon(i+1, m, n))
+            self.carbons.append(self.generate_carbon(i+1, m, n, 'find'))
     
     def plot_lattice(self, index):
         """plots the graphene lattice"""
@@ -197,35 +228,32 @@ if __name__ == '__main__':
     armchair.set_constants(0, 1)
     armchair.generate_eigen()
     armchair.generate_carbons(3, 3)
-    # armchair.plot_lattice(0)
-    # armchair.plot_lattice(1)
-    # armchair.plot_lattice(2)
-    # armchair.plot_lattice(3)
-    # armchair.plot_lattice(4)
-    print('ev', armchair.eigenvalues)
-    print('ev', armchair.eigenvectors)
+    armchair.plot_lattice(0)
+    armchair.plot_lattice(1)
+    armchair.plot_lattice(2)
+    armchair.plot_lattice(3)
+    armchair.plot_lattice(4)
+    armchair.plot_lattice(5)
 
 
     # Zigzag
-    zigzag = Graphene('ZigZag', np.matrix([]), 42, 42, 13)
+    zigzag = Graphene('ZigZag', np.matrix([]), 48, 48, 18)
     zigzag.generate_huckel()
     zigzag.add_connections([[1, 22], [4, 21], [5, 18], [8, 17], [9, 14], [15, 32], [16, 29], [19, 28],
                             [20, 25], [33, 35], [31, 37], [30, 38], [27, 39], [26, 40], [24, 42], [13, 34]])
-    zigzag.delete_connections([[34, 35], [37, 38], [39, 40]])
-    zigzag.add_connections([[2, 41], [3, 40], [6, 39], [7, 38], [10, 37], [11, 36]])
+    zigzag.delete_connections([[34, 35], [37, 38], [39, 40], [42, 43], [43, 44], [44, 45], [45, 46], [46, 47], [47, 48]])
+    #zigzag.add_connections([[2, 41], [3, 40], [6, 39], [7, 38], [10, 37], [11, 36]])
+    zigzag.add_connections([[41, 43], [40, 44], [39, 45], [38, 46], [37, 47], [36, 48], [43, 2], [44, 3], [45, 6], [46, 7],
+                            [47, 10], [48, 11]])
     zigzag.set_constants(0, 1)
     print(zigzag)
     zigzag.generate_eigen()
     zigzag.generate_carbons(3, 3)
+    zigzag.zig_zipper(3, 3)
+
     zigzag.plot_lattice(0)
     zigzag.plot_lattice(1)
     zigzag.plot_lattice(2)
     zigzag.plot_lattice(3)
     zigzag.plot_lattice(4)
     zigzag.plot_lattice(5)
-    zigzag.plot_lattice(6)
-    zigzag.plot_lattice(7)
-    zigzag.plot_lattice(8)
-    zigzag.plot_lattice(9)
-    print('ev', zigzag.eigenvalues)
-    print('ev', zigzag.eigenvectors)
