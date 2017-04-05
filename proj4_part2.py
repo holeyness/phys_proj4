@@ -1,9 +1,12 @@
-"""PART 2"""
+"""PART 2
+Preface: We extend our Molecule class to be able to calculate the various properties of types of Graphene
+"""
 
 from proj4_v1 import Molecule, a, b
 import numpy as np
 import matplotlib.pyplot as plt
 import copy
+
 
 class Carbon:
     def __init__(self, x, y, magnitudes, id):
@@ -19,7 +22,7 @@ class Graphene(Molecule):
         self.prev_id = 0 # Stores the id of the most recently generated carbon
         self.current_row = 1 # Stores the row of hexagons that the most recently generated carbon belongs to
 
-    def generate_carbon(self, id, m, n, position_set): #m is number of hexagon rows, n is number of hexagon columns
+    def generate_carbon(self, id, m, n, position_set):  # m is number of hexagon rows, n is number of hexagon columns
         """Mint a new Carbon atom"""
         mags = [(abs(eig[id - 1][0]) ** 2) for eig in self.eigenvectors]
         if position_set == 'find':
@@ -69,12 +72,11 @@ class Graphene(Molecule):
         a = 0.5 # Short leg of 30-60-90 triangle
         b = float((3**(1/2.0))/2.0) # long leg of 30-60-90 triangle
 
-
         if row == 1:
             if prev == 0:
                 xpos = 0.0
                 ypos = 0.0
-            elif prev == 4*n:
+            elif prev == 4 * n:
                 xpos = xprev - a
                 ypos = yprev - b  #(sqrt(3))/2
                 self.current_row += 1
@@ -210,6 +212,11 @@ class Graphene(Molecule):
         for c in self.carbons:
             circ = plt.Circle((c.pos[0], c.pos[1]), c.psi_magnitudes[index] * 5)
             plt.gcf().gca().add_artist(circ)
+
+        # Hide the axes in our plot
+        plt.xticks([])  # Hide the x-axes
+        plt.yticks([])
+        plt.title("Molecule Structure for " + self.name + " with energy level " + str(index) )
         plt.show()
 
 
@@ -224,10 +231,14 @@ if __name__ == '__main__':
     armchair.add_connections([[1, 12], [23, 34], [35, 42]])
 
     armchair.delete_connections([[34, 35], [37, 38], [39, 40]])
-    print(armchair)
     armchair.set_constants(0, 1)
     armchair.generate_eigen()
+    armchair.find_charge_density()
+    armchair.find_deloc_energy()
     armchair.generate_carbons(3, 3)
+    print(armchair)
+
+    # Show the graphs
     armchair.plot_lattice(0)
     armchair.plot_lattice(1)
     armchair.plot_lattice(2)
@@ -242,15 +253,17 @@ if __name__ == '__main__':
     zigzag.add_connections([[1, 22], [4, 21], [5, 18], [8, 17], [9, 14], [15, 32], [16, 29], [19, 28],
                             [20, 25], [33, 35], [31, 37], [30, 38], [27, 39], [26, 40], [24, 42], [13, 34]])
     zigzag.delete_connections([[34, 35], [37, 38], [39, 40], [42, 43], [43, 44], [44, 45], [45, 46], [46, 47], [47, 48]])
-    #zigzag.add_connections([[2, 41], [3, 40], [6, 39], [7, 38], [10, 37], [11, 36]])
     zigzag.add_connections([[41, 43], [40, 44], [39, 45], [38, 46], [37, 47], [36, 48], [43, 2], [44, 3], [45, 6], [46, 7],
                             [47, 10], [48, 11]])
     zigzag.set_constants(0, 1)
-    print(zigzag)
     zigzag.generate_eigen()
     zigzag.generate_carbons(3, 3)
     zigzag.zig_zipper(3, 3)
+    zigzag.find_charge_density()
+    zigzag.find_deloc_energy()
+    print(zigzag)
 
+    # Show the graphs
     zigzag.plot_lattice(0)
     zigzag.plot_lattice(1)
     zigzag.plot_lattice(2)
